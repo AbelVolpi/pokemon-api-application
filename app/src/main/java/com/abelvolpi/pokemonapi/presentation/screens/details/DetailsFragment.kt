@@ -1,8 +1,10 @@
 package com.abelvolpi.pokemonapi.presentation.screens.details
 
 import android.os.Bundle
+import android.transition.TransitionInflater
 import android.view.View
 import android.widget.Toast
+import androidx.core.view.doOnPreDraw
 import com.abelvolpi.pokemonapi.R
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -19,6 +21,7 @@ import com.google.android.flexbox.*
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class DetailsFragment : BaseFragment<FragmentDetailsBinding>(FragmentDetailsBinding::inflate) {
@@ -28,10 +31,23 @@ class DetailsFragment : BaseFragment<FragmentDetailsBinding>(FragmentDetailsBind
         findNavController()
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val animation = TransitionInflater.from(context).inflateTransition(android.R.transition.move)
+        sharedElementEnterTransition = animation
+
+        postponeEnterTransition(200, TimeUnit.MILLISECONDS)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initViews()
         observePokemonDetailsState()
+
+        postponeEnterTransition()
+        binding.pokemonImageView.doOnPreDraw {
+            startPostponedEnterTransition()
+        }
     }
 
     private fun initViews() {
@@ -43,6 +59,8 @@ class DetailsFragment : BaseFragment<FragmentDetailsBinding>(FragmentDetailsBind
                 fetchPokemonDetails(genericPokemon.name)
                 pokemonNumberTextView.text =
                     getString(R.string.pokemon_number_pattern, genericPokemon.number)
+
+                pokemonImageView.transitionName = genericPokemon.number
             }
 
             argsImage?.let { pokemonImage ->
